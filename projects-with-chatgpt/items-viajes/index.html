@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itinerario de viajes </title>
+    <style>
+        body{
+
+            background-color: rgb(175, 203, 237);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .buscador{
+            background-color: rgb(255, 255, 255);
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        input{
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid gray;
+            width: 80%;
+            margin: 0 auto;
+            border-style: 0.5px solid;
+        }
+        button{
+            display: block;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            width: 50%;
+            background-color: black;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 10px;
+
+        }
+        .buscador{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .container{
+            background-color: rgb(255, 255, 255);
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 10px;
+        }
+
+        pre {
+            text-align: left;
+            white-space: pre-wrap;
+        }
+        .search{
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.85);
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center
+
+        }
+        .search img
+        {
+            width: 50%;
+
+
+        } 
+
+    </style>
+</head>
+<body>
+    <div class="search">
+        <img src="loading-white.gif" alt="" srcset="">
+    </div>
+    
+    <div class="buscador">
+        <input id="textSeachPais" type="text" placeholder="¿a que pais quiere ir?">
+        <input id="textSeach" type="text" placeholder="¿a donde quieres ir?">
+        <button onclick="onClicksearch()">Buscar</button>
+    </div>
+
+    <div class="container" >
+        <pre id="result">
+           
+        </pre>
+    </div>
+    <script>
+        const button = document.querySelector('button');
+        const inputBuscador = document.getElementById('textSeach').value;
+        const inputBuscadorPais = document.getElementById('textSeachPais').value;
+
+        const CHATGPT_KEI= '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';
+
+        //no se ve la carga
+        // hideLoading()
+        
+        showLoading();
+        
+        async function onClicksearch() {
+            //se ve la carga            
+            hideLoading();
+
+            let container  = document.getElementById('result');
+             
+            let prompt  = getPromt(inputBuscador);
+            let destinoLugar = getPromptPais(inputBuscadorPais);
+
+            let responde = await callToChatGpt(prompt, destinoLugar);
+
+            container.innerHTML = responde;
+             //no se ve la carga
+            showLoading();
+        }
+
+        async function  callToChatGpt(prompt, destinoLugar) {
+     
+            const bodyRequest = {
+                model:  "gpt-3.5-turbo",
+                max_tokens: 2000,
+                temperature: 1, // Puedes ajustar esto según la coherencia deseada.
+                messages:[
+                // {
+                // role: "system", content: "Eres una asistente útil"
+                // },
+                {
+                        role: "system",  content: `Como guía turístico de ${destinoLugar}`
+                },
+                    {
+                        role: "user", content: prompt
+                    }
+                ]
+            }
+
+            const request = { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${CHATGPT_KEI}`
+                },
+                body: JSON.stringify(bodyRequest)
+                
+            }  
+
+          const respuesta =   await fetch('https://api.openai.com/v1/chat/completions', request)
+           
+          const json = await respuesta.json(); 
+     
+           return json.choices[0].message.content;
+
+        }
+
+        function getPromt(destino) {
+            return `me proporcionaras un itinerario para una semana en ${destino} Incluiré recomendaciones de lugares para visitar, opciones de restaurantes, actividades diarias y nombres de hoteles asequibles para hospedarte. Enfatizaré la precisión en la lista de lugares para visitar, opciones de comida y actividades de cada día.`;
+        }
+
+        function getPromptPais(destinoLugar) {
+            return destinoLugar;
+        }
+
+
+        function showLoading() {
+            document.querySelector('.search').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.querySelector('.search').style.display = 'block';
+        }
+
+
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Boot</title>
+    <style>
+        .chat {
+            max-width: 300px;
+            background-color: rgb(13, 203, 203);
+            padding: 10px;
+            border-radius: 10px;
+            min-width: 362px;
+            max-width: 500px;
+            height: 20rem;
+            overflow: scroll;
+        }
+        .user-message, .assistant-message{
+            background-color: white;
+            /*seleciona solo el ancho del texto */
+            width: fit-content;
+            border-radius: 0.5rem;
+            padding: 2%;
+            margin: 3px 8px;
+
+        }
+        .assistant-message{
+            margin-left: auto;
+            color: #C803B187;
+            font-weight: bold;
+        }
+        .assistant-message::before{
+            content: 'Response:';
+            color: #519a43;
+            transform: rotate(180deg);
+        }
+
+        input{
+            border: none;
+            outline: none;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+        button{
+            border: none;
+            outline: none;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 15px;
+            background: #24920e;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transform: 10ms ease;
+        }
+        button:hover{
+            background: #0d6a0d;
+        }
+
+        .container-btn{
+            display: flex;
+            justify-content:end;
+            margin-top: auto;/* Establece la dirección del flex container como columna */
+
+           
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div class="chat">
+        <div class="message">
+            <div class="user-message">
+           <span> ¿hellow word?</span> 
+            </div>
+            <div class="assistant-message">
+                <br>
+                <span>very good. and you ? </span>
+            </div>
+            <div class="user-message">
+                <span> ¿hellow word?</span> 
+            </div>
+        </div>
+        <br>
+        <div class="container-btn">
+            <input type="text"id="question" placeholder="pregunte here">
+            <button onclick="onclickBtnEnviar()">send</button>
+        </div>
+    </div>
+
+
+    <script>
+
+const CHATGPT_KEI= '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';
+
+let arrMessages = [];
+
+init();
+function init() {
+    setRoleChatGpt('Eres un asistente de viajes');
+    renderMessage();
+}
+
+
+async function onclickBtnEnviar(){
+  let inputHtml =  document.getElementById('question');
+  let userMessage = inputHtml.value;
+  inputHtml.value = '';
+  await makeAquestionToChatGpt(userMessage);
+  renderMessage();
+};
+
+
+
+
+// recibe el asistente... en este setido tu le asignas el asistente
+function setRoleChatGpt(promptExplicationRol) {
+    arrMessages = [
+        { "role": "system",  "content": promptExplicationRol }
+    ];
+    arrMessages.push({ role: "assistant", content: 'Hola, como te puedo ayudar?'});
+}
+
+function scrollToEnd(params) {
+    let divScroll = document.getElementsByClassName('chat')[0];
+    divScroll.scrollTop = divScroll.scrollHeight;
+}
+
+
+
+
+// recibe la pregunta que le hagas ... 
+async function makeAquestionToChatGpt(question) {
+
+    arrMessages.push({ role: "user", content: question});
+    arrMessages.push({ role: "assistant", content: 'Escribiendo...'});
+    renderMessage();
+    //  elimina el elemnto escribiendo
+    arrMessages.pop();
+
+
+   let response  = await  callToChatGpt();
+
+   // recibe la respuesta para que tenga el contexto de antes
+   arrMessages.push({ role: "assistant", content: response});
+
+   renderMessage();
+}
+
+    function renderMessage() {
+
+        let html = '';
+        for (let message of arrMessages) {
+
+
+            //ignora el elemnto system
+            if (message.role == 'system') {
+                continue;
+            }
+            html += `        
+                <div class="${message.role}-message">
+                    <span> ${message.content}</span> 
+                </div>`;
+
+        }
+        document.getElementsByClassName('message')[0].innerHTML = html;
+        scrollToEnd();
+    }
+
+
+async function  callToChatGpt() { 
+     
+     const bodyRequest = {
+         "model":  "gpt-3.5-turbo",
+         "max_tokens": 2000,
+         "temperature": 1, 
+         "messages": arrMessages
+     }
+
+     const request = { 
+         method: 'POST',
+         headers: {
+             'Content-Type': 'application/json',
+             'Authorization': `Bearer ${CHATGPT_KEI}`
+         },
+         body: JSON.stringify(bodyRequest)
+         
+     }  
+
+   const respuesta =   await fetch('https://api.openai.com/v1/chat/completions', request)
+    
+   const json = await respuesta.json(); 
+
+    return json.choices[0].message.content;
+
+ }
+
+ function getPromt(destino) {
+     return `me proporcionaras un itinerario para una semana en ${destino} Incluiré recomendaciones de lugares para visitar, opciones de restaurantes, actividades diarias y nombres de hoteles asequibles para hospedarte. Enfatizaré la precisión en la lista de lugares para visitar, opciones de comida y actividades de cada día.`;
+ }
+
+
+    </script>
+    
+</body>
+</html>

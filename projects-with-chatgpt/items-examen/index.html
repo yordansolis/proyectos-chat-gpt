@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>App para estudiar</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                overflow-x: hidden;
+            }
+
+            body {
+                background: rgba(247, 150, 249, 0.834);
+                color: black;
+                font-size: 28px;
+                font-family: sans-serif;
+            }
+
+            section {
+                padding: 2rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .tasks {
+                padding: 5rem;
+                background: rgb(115, 189, 245);
+                border-radius: 2rem;
+                display: flex;
+                flex-direction: column;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            input {
+                padding: 0.5rem;
+                margin-bottom: 1rem;
+                border-radius: 1rem;
+                border: none;
+                font-size: 20px;
+            }
+
+            button {
+                margin-top: 10px;
+                padding: 1rem;
+                font-family: sans-serif;
+                font-weight: bold;
+                color: white;
+                background: cornflowerblue;
+                border-style: none;
+                border-radius: 2rem;
+                cursor: pointer;
+              
+                text-transform: uppercase;
+            }
+
+            label {
+                font-weight: bold;
+            }
+
+            button:hover {
+                color: white;
+                ;
+                background: rgba(0, 0, 0, 0.795);
+                opacity: 0.8;
+            }
+
+            .container-card {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 5rem;
+            }
+
+            .card {
+                background: #f3eebf;
+                color: black;
+                max-width: 45%;
+                font-size: 18px;
+                padding: 2rem;
+                display: flex;
+                flex-direction: column;
+                flex-wrap: wrap;
+                gap: 2px;
+                box-shadow: 9px 13px 16px -1px rgba(0, 0, 0, 0.564);
+                -webkit-box-shadow: 9px 13px 16px -1px rgba(0, 0, 0, 0.75);
+              
+                cursor: pointer;
+            }
+
+            p {
+                opacity: 0.6;
+                font-family: Verdana, Geneva, Tahoma, sans-serif;
+           
+            }
+
+            .question {
+                font-weight: bold;
+                font-size: 20px;
+                margin-bottom: 10px;
+                opacity: 0.6;
+            }
+        </style>
+    </head>
+
+    <body>
+
+
+    
+    <section >
+        <div class="tasks">        
+        <div>
+            <label for="input">Asignatura:</label><br>
+            <input type="text" 
+                    id="txtQuestion"
+                    name="signatura"
+                    placeholder="asignatura"
+            >
+    </div>
+    <div>
+        <label for="tema">Tema:</label><br>
+        <input type="text" 
+                    id="txtAnswer"
+                    name="tema"
+                    placeholder="tema"
+            >
+    </div>
+    <div>
+        <button  onclick="onClickBtnTxt()">Dame 5 preguntas para practucar</button>
+    </div>
+
+
+</section>
+
+<div id="card">
+<div class="container-card"  onclick="onClickBtnQuestion()" >
+   
+    <section class="card">
+        <p id="question">
+        <b>Pregunta</b><br>
+       </p>
+
+        <p id="answer">
+            <b>Respuesta</b><br>
+        </p>
+    </section>
+</div>
+</div>
+<script>
+    let index = 0;
+    let json = [];
+    let needShowQuestion = true;
+
+             
+  
+      
+        // json = getQuestion();  
+        const CHATGPT_KEI= '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';
+
+    async function onClickBtnTxt() {
+        
+        const inputAsig = document.getElementById('txtQuestion').value;
+            const inputTema = document.getElementById('txtAnswer').value;   
+            let prompt = getPrompt(inputAsig, inputTema);
+           // console.log(prompt);
+            let resGpt = await callChatGpt(prompt);
+
+           // console.log('gpt', resGpt);
+            json = JSON.parse(resGpt);
+
+
+             onClickBtnQuestion();
+    }
+
+        async function onClickBtnQuestion() { 
+
+            chekCard(needShowQuestion);                
+            
+            if (needShowQuestion) {
+                visibleQuestion(true);                   
+                visibleAnswar(false);
+
+                let question = json.preguntas[index].pregunta;
+                let htmlQuestion = document.getElementById('question');
+    
+                htmlQuestion.innerHTML = `<b> Pregunta:<b/> </br>
+                                            ${question}`;
+
+              }else {
+                        visibleQuestion(false);
+                        visibleAnswar(true);
+                        let answer = json.preguntas[index].respuesta;
+                        let htmlQuestion = document.getElementById('answer');
+                        htmlQuestion.innerHTML =`<b> Respuesta:<b/> </br>
+                                            ${answer}`;
+                 }
+
+                 if (needShowQuestion == false) {
+                        index++;
+                 }  
+            needShowQuestion = !needShowQuestion;
+
+        }
+        function chekCard() {
+            if (needShowQuestion && index == 5) {
+                visibleCard(false);    
+                index = 0;        
+            }
+        }
+
+
+
+
+        
+     function visibleCard(isVisible) {
+        document.getElementById('card').hidden = true;
+       // document.getElementById('card').hidden = true;
+        /*
+        NOTA:  -> hidden
+         se utiliza para ocultar elementos HTML en una página web. La propiedad hidden se aplica a elementos HTML y es un atributo booleano. Cuando un elemento tiene hidden establecido en true, el elemento se oculta y no es visible en la página
+        */
+     }
+
+     function visibleAnswar(isVisible) {
+        document.getElementById('answer').hidden = !isVisible;
+     }
+
+     function visibleQuestion(isVisible) {
+        document.getElementById('question').hidden = !isVisible;        
+     }
+
+
+
+
+
+
+
+ async function  callChatGpt(prompt) {
+     
+            const bodyRequest = {
+                model:  "gpt-3.5-turbo",
+                max_tokens: 2000,
+                temperature: 1, // Puedes ajustar esto según la coherencia deseada.
+                messages:[
+                    {
+                        role: "user", content: prompt
+                    }
+                ]
+            }
+
+            const request = { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${CHATGPT_KEI}`
+                },
+                body: JSON.stringify(bodyRequest)
+                
+            }  
+
+          const respuesta =   await fetch('https://api.openai.com/v1/chat/completions', request)
+           
+          const json = await respuesta.json(); 
+           return json.choices[0].message.content;
+
+        }
+    
+
+
+
+        
+        function getPrompt(asignatura, tema) {
+
+            return `asignatura:  ${asignatura}, TEMA: ${tema}. necesito que armes 5 preguntas con sus respectivas respuestas, pero que me lo devuelvas en JSON solo arma en json sin decir nada previamente, ni aclarar nada. se precioso con lo que le estoy pasando.`;
+
+        //     return { 
+        //         "preguntas": [
+        //         {
+        //         "question": "¿Qué es un objeto en programación orientada a objetos (POO)?",
+
+        //         "answer": "Un objeto en POO es una instancia de una clase que representa un elemento del mundo real y contiene datos (propiedades) y comportamientos (métodos) relacionados."
+
+        //         },
+
+        //         {
+        //         "question": "¿Cómo se define una clase en PHP?",
+
+        //         "answer": "En PHP, una clase se define usando la palabra clave 'class', seguida del nombre de la clase y un conjunto de llaves que contienen las propiedades y métodos de la clase."
+        //         },
+
+        //         {
+        //         "question": "¿Qué es la herencia en POO y cómo se utiliza en PHP?",
+        //         "answer": "La herencia es un concepto que permite a una clase heredar propiedades y métodos de otra clase. En PHP, se utiliza la palabra clave 'extends' para establecer una relación de herencia entre una clase hija y una clase padre."
+        //         },
+        //         {
+        //         "question": "¿Qué es la abstracción en POO?",
+        //         "answer": "La abstracción es el proceso de simplificar y modelar objetos del mundo real en clases y objetos en el código. Ayuda a enfocarse en los aspectos esenciales y a ocultar los detalles innecesarios."
+        //         },
+        //         {
+        //         "question": "¿Cuál es la diferencia entre un método estático y un método de instancia en PHP?",
+        //         "answer": "Un método estático en PHP se llama en la clase misma, sin necesidad de crear una instancia de la clase. Un método de instancia se llama en un objeto específico de la clase y puede acceder a las propiedades del objeto."
+        //         }
+        //     ]
+        //     }
+        // }
+
+        // function getPromptPais(destinoLugar) {
+        //     return destinoLugar;
+        // }
+
+
+        }
+
+
+
+</script>
+</body>
+</html>
